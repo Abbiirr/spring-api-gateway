@@ -1,0 +1,27 @@
+config:
+  SERVER_PORT: "8085"
+  SPRING_PROFILES_ACTIVE: "prod"
+  ZIPKIN_URL: "http://tempo.dev:9411"
+  LOKI_DISTRIBUTOR_URL: "http://loki-headless.dev:3100/loki/api/v1/push"
+  AUTH_SERVICE_URL: "http://auth-service-service.dev"
+  USER_SERVICE_URL: "http://user-service-service.dev"
+  TAX_SERVICE_URL: "http://tax-service-service.dev"
+
+replicaCount: 1
+
+image:
+  name: api-gateway
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  targetPort: 8085
+  nodePort: 30885
+
+ingress:
+  enabled: true
+  rules:
+    - host: taxwizapi.sagitta.dev
+      path: /
+      serviceName: api-gateway-service
+      servicePort: 80

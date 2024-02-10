@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <springProperty scope="context" name="SERVICE_NAME" source="spring.application.name"/>
+    <springProperty scope="context" name="LOKI_DISTRIBUTOR_URL" source="loki.distributor.url"/>
+
+    <conversionRule conversionWord="clr" converterClass="org.springframework.boot.logging.logback.ColorConverter"/>
+    <conversionRule conversionWord="wex"
+                    converterClass="org.springframework.boot.logging.logback.WhitespaceThrowableProxyConverter"/>
+    <conversionRule conversionWord="wEx"
+                    converterClass="org.springframework.boot.logging.logback.ExtendedWhitespaceThrowableProxyConverter"/>
+
+    <property name="LOG_PATTERN"
+              value="${LOG_PATTERN:-%5p [${SERVICE_NAME},%X{traceId:-},%X{spanId:-}] ${PID:- } --- [%t] %-40.40logger{39} : %m%n${LOG_EXCEPTION_CONVERSION_WORD:-%wEx}}"/>
+
+    <appender name="STDOUT_CONSOLE_APPENDER" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>${LOG_PATTERN}</Pattern>
+        </layout>
+    </appender>
+
+    <appender name="LOKI" class="com.github.loki4j.logback.Loki4jAppender">
+        <maxRetries>259200</maxRetries>
+        <http>
+            <url>${LOKI_DISTRIBUTOR_URL}</url>
+        </http>
+        <verbose>true</verbose>
+        <format>
+            <label>
+                <pattern>
+                    service=${SERVICE_NAME},level=%level,logger=%logger{39},class=%X{class:-NA},method=%X{method:-NA}
+                </pattern>
+            </label>
+            <message>
+                <pattern>${LOG_PATTERN}</pattern>
+            </message>
+            <sortByTime>false</sortByTime>
+        </format>
+    </appender>
+
+    <root level="DEBUG">
+        <appender-ref ref="LOKI"/>
+    </root>
+
+</configuration>

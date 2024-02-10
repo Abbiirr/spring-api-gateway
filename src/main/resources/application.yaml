@@ -1,0 +1,86 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: api-gateway
+  profiles:
+    active: dev
+  datasource:
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+#  liquibase:
+#    enabled: true
+#    change-log: classpath:db/migrations/changelog-master.xml
+  data:
+    redis:
+      timeout: 2s
+  cache:
+    type: redis
+    redis:
+      cache-null-values: false
+      time-to-live: 60
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: authentication-service
+          uri: http://localhost:8684
+          metadata:
+            public: true
+            docs: /api/docs
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - RewritePath=/api/auth/?(?<segment>.*), /authenticate/$\{segment}
+        - id: user-service
+          uri: http://localhost:8084
+          metadata:
+            public: false
+            docs: /api/docs
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - RewritePath=/api/user/?(?<segment>.*), /users/$\{segment}
+        - id: tax-service
+          uri: http://localhost:8082
+          metadata:
+            public: false
+            docs: /api/docs
+          predicates:
+            - Path=/api/tax/**
+          filters:
+            - RewritePath=/api/tax/?(?<segment>.*), /tax/$\{segment}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  info:
+    env:
+      enabled: true
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  tracing:
+    sampling:
+      probability: 1
+
+logging:
+  level:
+    root: debug

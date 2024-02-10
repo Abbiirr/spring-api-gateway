@@ -1,0 +1,58 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+  cloud:
+    gateway:
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: authentication-service
+          uri: ${AUTH_SERVICE_URL}
+          metadata:
+            public: true
+            docs: /api-docs
+          predicates:
+            - Path=/api/auth/**
+          filters:
+            - RewritePath=/api/auth/?(?<segment>.*), /authenticate/$\{segment}
+        - id: user-service
+          uri: ${USER_SERVICE_URL}
+          metadata:
+            public: true
+            docs: /api-docs
+          predicates:
+            - Path=/api/user/**
+          filters:
+            - RewritePath=/api/user/?(?<segment>.*), /users/$\{segment}
+        - id: tax-service
+          uri: ${TAX_SERVICE_URL}
+          metadata:
+            public: true
+            docs: /api-docs
+          predicates:
+            - Path=/api/tax/**
+          filters:
+            - RewritePath=/api/tax/?(?<segment>.*), /tax/$\{segment}
+
+management:
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_URL}
+
+logging:
+  config: classpath:log/logback-dev.xml
+
+loki:
+  distributor:
+    url: ${LOKI_DISTRIBUTOR_URL}
